@@ -41,8 +41,6 @@ class FavoritesScreen extends StatelessWidget {
                 ),
 
                 const SizedBox(height: 16),
-
-                // Additional instruction
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Text(

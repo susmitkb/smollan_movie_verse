@@ -101,25 +101,62 @@ class _HomeScreenState extends State<HomeScreen> {
           if (provider.state == UIState.loading && provider.shows.isEmpty) {
             return const LoadingIndicator();
           }
-
           if (provider.state == UIState.error && provider.shows.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Error: ${provider.errorMessage}',
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => provider.fetchShows(provider.currentFilter, loadMore: false),
-                    child: const Text('Retry'),
-                  ),
-                ],
+            return Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    LoadingIndicator.netwrokError(errorMessage: "Network Connection Error!"),
+
+                    const SizedBox(height: 24),
+
+                    // Professional retry button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => provider.fetchShows(provider.currentFilter, loadMore: false),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 3,
+                          shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.refresh, size: 20),
+                            SizedBox(width: 12),
+                            Text(
+                              'Try Again',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // Additional help text
+                    Text(
+                      'If the problem persists, check your internet connection',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }
@@ -128,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                  LoadingIndicator.searchEmpty(),
                   const SizedBox(height: 16),
                   Text(
                     'No shows found',

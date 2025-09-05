@@ -20,6 +20,7 @@ dependencies:
   cached_network_image: ^3.4.1
   flutter_screenutil: ^5.9.3
   html: ^0.15.6
+  flutter_cache_manager: ^3.4.1
 
 dev_dependencies:
   flutter_test:
