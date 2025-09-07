@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:smollan_movie_verse/models/tvShow_models.dart';
 import 'package:smollan_movie_verse/providers/imageCache_provider.dart';
@@ -28,7 +29,7 @@ class ShowDetailsScreen extends StatelessWidget {
           width: double.infinity,
           height: double.infinity,
           errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.movie, size: 100, color: Colors.grey);
+            return Icon(Icons.movie, size: 100.w, color: Colors.grey);
           },
         ),
       ),
@@ -73,7 +74,7 @@ class ShowDetailsScreen extends StatelessWidget {
       builder: (BuildContext context) {
         return Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16.0),
+            borderRadius: BorderRadius.circular(16.r),
           ),
           elevation: 0,
           backgroundColor: Colors.transparent,
@@ -81,49 +82,51 @@ class ShowDetailsScreen extends StatelessWidget {
             width: double.infinity,
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(16.0),
+              borderRadius: BorderRadius.circular(16.r),
             ),
-            padding: const EdgeInsets.all(24.0),
+            padding: EdgeInsets.all(24.r),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 60.w,
+                  height: 60.h,
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.error.withOpacity(0.1),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     Icons.favorite_border,
-                    size: 30,
+                    size: 30.w,
                     color: Theme.of(context).colorScheme.error,
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                SizedBox(height: 20.h),
 
                 Text(
                   'Remove from Favorites?',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 18.sp,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 12),
+                SizedBox(height: 12.h),
 
                 Text(
                   'Are you sure you want to remove "${show.name}" from your favorites?',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                     height: 1.4,
+                    fontSize: 14.sp,
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 24),
+                SizedBox(height: 24.h),
 
                 Row(
                   children: [
@@ -131,9 +134,9 @@ class ShowDetailsScreen extends StatelessWidget {
                       child: OutlinedButton(
                         onPressed: () => Navigator.of(context).pop(),
                         style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(12.r),
                           ),
                           side: BorderSide(
                             color: Theme.of(context).colorScheme.outline,
@@ -144,12 +147,13 @@ class ShowDetailsScreen extends StatelessWidget {
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface,
                             fontWeight: FontWeight.w600,
+                            fontSize: 14.sp,
                           ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12.w),
 
                     Expanded(
                       child: ElevatedButton(
@@ -162,7 +166,7 @@ class ShowDetailsScreen extends StatelessWidget {
                               content: Text('Removed "${show.name}" from favorites'),
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(8.r),
                               ),
                               backgroundColor: Theme.of(context).colorScheme.error,
                             ),
@@ -171,16 +175,17 @@ class ShowDetailsScreen extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(context).colorScheme.error,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(12.r),
                           ),
                           elevation: 2,
                         ),
-                        child: const Text(
+                        child: Text(
                           'Remove',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
+                            fontSize: 14.sp,
                           ),
                         ),
                       ),
@@ -203,6 +208,7 @@ class ShowDetailsScreen extends StatelessWidget {
       icon: Icon(
         isFavorite ? Icons.favorite : Icons.favorite_border,
         color: isFavorite ? Colors.red : Colors.white,
+        size: 24.w,
       ),
       onPressed: () {
         if (isFavorite) {
@@ -214,7 +220,7 @@ class ShowDetailsScreen extends StatelessWidget {
               content: Text('Added "${show.name}" to favorites'),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8.r),
               ),
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
@@ -238,7 +244,7 @@ class ShowDetailsScreen extends StatelessWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 300,
+            expandedHeight: 300.h,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
@@ -247,14 +253,15 @@ class ShowDetailsScreen extends StatelessWidget {
               ),
               title: Text(
                 show.name,
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
+                  fontSize: 16.sp,
                   shadows: [
                     Shadow(
                       blurRadius: 10.0,
                       color: Colors.black,
-                      offset: Offset(2.0, 2.0),
+                      offset: const Offset(2.0, 2.0),
                     ),
                   ],
                 ),
@@ -265,44 +272,51 @@ class ShowDetailsScreen extends StatelessWidget {
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16.r),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
+                  Wrap(
+                    spacing: 8.w,
+                    runSpacing: 8.h,
                     children: [
                       Chip(
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         label: Text(
                           '⭐ ${show.rating}',
-                          style: const TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12.sp,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 8),
                       ...show.genres.take(3).map((genre) {
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: Chip(
-                            label: Text(genre),
+                        return Chip(
+                          label: Text(
+                            genre,
+                            style: TextStyle(fontSize: 12.sp),
                           ),
                         );
                       }),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16.h),
                   Text(
                     'Summary',
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
+                      fontSize: 20.sp,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: 8.h),
                   Text(
                     _parseHtmlString(show.summary),
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontSize: 14.sp,
+                    ),
                     textAlign: TextAlign.justify,
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24.h),
                   if (show.genres.isNotEmpty)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -311,15 +325,19 @@ class ShowDetailsScreen extends StatelessWidget {
                           'Genres',
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
+                            fontSize: 20.sp,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8.h),
                         Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
+                          spacing: 8.w,
+                          runSpacing: 4.h,
                           children: show.genres.map((genre) {
                             return Chip(
-                              label: Text(genre),
+                              label: Text(
+                                genre,
+                                style: TextStyle(fontSize: 12.sp),
+                              ),
                             );
                           }).toList(),
                         ),
@@ -335,6 +353,7 @@ class ShowDetailsScreen extends StatelessWidget {
         onPressed: () => themeProvider.toggleTheme(),
         child: Icon(
           themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+          size: 24.w,
         ),
       ),
     );

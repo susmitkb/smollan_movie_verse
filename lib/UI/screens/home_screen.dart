@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart'; // Add this
 import 'package:smollan_movie_verse/UI/screens/favourites_screen.dart';
 import 'package:smollan_movie_verse/UI/screens/search_screen.dart';
 import 'package:smollan_movie_verse/UI/widgets/custom_appBar.dart';
@@ -74,25 +75,29 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSearchBar() {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(16.r), // Use .r for responsive radius
       child: GestureDetector(
         onTap: _navigateToSearchScreen,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h), // .w and .h for responsive sizing
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surfaceVariant,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12.r),
             border: Border.all(color: Colors.grey[300]!),
           ),
           child: Row(
             children: [
-              const Icon(Icons.search, color: Colors.grey),
-              const SizedBox(width: 12),
-              Text(
-                'Search for TV shows...',
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 16,
+              Icon(Icons.search, color: Colors.grey, size: 20.w), // Responsive icon size
+              SizedBox(width: 12.w),
+              Expanded( // Added Expanded to prevent text overflow
+                child: Text(
+                  'Search for TV shows...',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 16.sp, // Use .sp for responsive font size
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  maxLines: 1,
                 ),
               ),
             ],
@@ -104,22 +109,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildFilterChips(TVShowProvider provider) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      padding: EdgeInsets.symmetric(horizontal: 16.w),
+      child: Wrap( // Changed from Row to Wrap for better responsiveness
+        spacing: 8.w,
+        runSpacing: 8.h,
+        alignment: WrapAlignment.center,
         children: [
           FilterChip(
-            label: const Text('Trending'),
+            label: Text('Trending', style: TextStyle(fontSize: 12.sp)),
             selected: provider.currentFilter == ShowFilter.trending,
             onSelected: (_) => provider.fetchShows(ShowFilter.trending, loadMore: false),
           ),
           FilterChip(
-            label: const Text('Popular'),
+            label: Text('Popular', style: TextStyle(fontSize: 12.sp)),
             selected: provider.currentFilter == ShowFilter.popular,
             onSelected: (_) => provider.fetchShows(ShowFilter.popular, loadMore: false),
           ),
           FilterChip(
-            label: const Text('Upcoming'),
+            label: Text('Upcoming', style: TextStyle(fontSize: 12.sp)),
             selected: provider.currentFilter == ShowFilter.upcoming,
             onSelected: (_) => provider.fetchShows(ShowFilter.upcoming, loadMore: false),
           ),
@@ -137,8 +144,8 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Center(
             child: Lottie.asset(
               'assets/lottie/movie_loading.json',
-              width: 200,
-              height: 200,
+              width: 200.w,
+              height: 200.h,
               fit: BoxFit.contain,
             ),
           ),
@@ -148,54 +155,56 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildErrorState(TVShowProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.all(20.0),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            LoadingIndicator.netwrokError(errorMessage: "Network Connection Error!"),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () => provider.fetchShows(provider.currentFilter, loadMore: false),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 3,
-                  shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.refresh, size: 20),
-                    SizedBox(width: 12),
-                    Text(
-                      'Try Again',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+    return SingleChildScrollView( // Added SingleChildScrollView for safety
+      child: Padding(
+        padding: EdgeInsets.all(20.r),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              LoadingIndicator.networkError(errorMessage: "Network Connection Error!"),
+              SizedBox(height: 24.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => provider.fetchShows(provider.currentFilter, loadMore: false),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16.h, horizontal: 24.w),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
-                  ],
+                    elevation: 3,
+                    shadowColor: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.refresh, size: 20.w),
+                      SizedBox(width: 12.w),
+                      Text(
+                        'Try Again',
+                        style: TextStyle(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'If the problem persists, check your internet connection',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
+              SizedBox(height: 16.h),
+              Text(
+                'If the problem persists, check your internet connection',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14.sp,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -212,10 +221,14 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 LoadingIndicator.searchEmpty(),
-                const SizedBox(height: 16),
-                Text(
-                  'No shows found',
-                  style: Theme.of(context).textTheme.titleMedium,
+                SizedBox(height: 16.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20.w),
+                  child: Text(
+                    'No shows found',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontSize: 16.sp),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
               ],
             ),
@@ -230,7 +243,7 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         _buildSearchBar(),
         _buildFilterChips(provider),
-        const SizedBox(height: 16),
+        SizedBox(height: 16.h),
         Expanded(
           child: NotificationListener<ScrollNotification>(
             onNotification: (ScrollNotification scrollInfo) {
@@ -248,12 +261,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: GridView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.all(8),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
+                    padding: EdgeInsets.all(8.r),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _getCrossAxisCount(context), // Responsive cross axis count
                       childAspectRatio: 0.7,
-                      crossAxisSpacing: 8,
-                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8.w,
+                      mainAxisSpacing: 8.h,
                     ),
                     itemCount: provider.shows.length,
                     itemBuilder: (context, index) {
@@ -264,24 +277,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 if (provider.isLoadingMore)
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: EdgeInsets.all(16.r),
                     child: Center(
                       child: Lottie.asset(
                         'assets/lottie/movie_loading.json',
-                        width: 100,
-                        height: 100,
+                        width: 100.w,
+                        height: 100.h,
                         fit: BoxFit.contain,
                       ),
                     ),
                   ),
                 if (!provider.hasMoreShows && provider.shows.isNotEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(16.0),
+                  Padding(
+                    padding: EdgeInsets.all(16.r),
                     child: Text(
                       'No more shows to load',
                       style: TextStyle(
                         color: Colors.grey,
                         fontStyle: FontStyle.italic,
+                        fontSize: 14.sp,
                       ),
                     ),
                   ),
@@ -293,6 +307,14 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  // Helper method to determine responsive grid columns
+  int _getCrossAxisCount(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    if (width > 600) return 4; // Tablet
+    if (width > 400) return 3; // Large phone
+    return 2; // Small phone
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<TVShowProvider>(context);
@@ -302,7 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: 'Smollan Movie Verse',
         actions: [
           IconButton(
-            icon: const Icon(Icons.favorite),
+            icon: Icon(Icons.favorite, size: 24.w),
             onPressed: _navigateToFavoritesScreen,
           ),
         ],
