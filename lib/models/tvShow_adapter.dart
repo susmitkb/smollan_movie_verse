@@ -17,7 +17,7 @@ class TVShowAdapter extends TypeAdapter<TVShow> {
     return TVShow(
       id: id,
       name: name,
-      imageUrl: imageUrl.isNotEmpty ? imageUrl : null,
+      imageUrl: imageUrl.isNotEmpty ? imageUrl : null, // Handle empty strings
       rating: rating,
       genres: genres,
       summary: summary,
@@ -28,7 +28,7 @@ class TVShowAdapter extends TypeAdapter<TVShow> {
   void write(BinaryWriter writer, TVShow obj) {
     writer.writeInt(obj.id);
     writer.writeString(obj.name);
-    writer.writeString(obj.imageUrl ?? '');
+    writer.writeString(obj.imageUrl ?? ''); // Handle null values
     writer.writeDouble(obj.rating);
     writer.writeList(obj.genres);
     writer.writeString(obj.summary);

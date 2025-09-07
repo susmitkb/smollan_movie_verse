@@ -63,7 +63,14 @@ class LoadingIndicator extends StatelessWidget {
     return LoadingIndicator(
       lottieAsset: 'assets/lottie/error_animation.json',
       message: errorMessage ?? 'Something went wrong',
-      size: 200,
+      size: 600,
+    );
+  }
+  factory LoadingIndicator.netwrokError({String? errorMessage}) {
+    return LoadingIndicator(
+      lottieAsset: 'assets/lottie/no_internet_animation.json',
+      message: errorMessage ?? 'Something went wrong',
+      size: 600,
     );
   }
 

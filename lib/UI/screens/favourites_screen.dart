@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smollan_movie_verse/UI/home_screen.dart';
+import 'package:smollan_movie_verse/UI/screens/home_screen.dart';
 import 'package:smollan_movie_verse/UI/widgets/custom_appBar.dart';
 import 'package:smollan_movie_verse/UI/widgets/loadingIndicator.dart';
 import 'package:smollan_movie_verse/providers/favourites_provider.dart';
@@ -15,6 +15,40 @@ class FavoritesScreen extends StatelessWidget {
       appBar: const CustomAppBar(title: 'Favorites'),
       body: Consumer<FavoritesProvider>(
         builder: (context, favoritesProvider, child) {
+          if (favoritesProvider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          if (favoritesProvider.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error loading favorites',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    favoritesProvider.error!,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      favoritesProvider.refreshFavorites();
+                    },
+                    child: const Text('Try Again'),
+                  ),
+                ],
+              ),
+            );
+          }
+
           final favorites = favoritesProvider.favorites;
 
           return favorites.isEmpty
@@ -22,12 +56,8 @@ class FavoritesScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Lottie animation for empty favorites
                 LoadingIndicator.favouritesEmpty(),
-
                 const SizedBox(height: 24),
-
-                // Catchy message
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Text(
@@ -39,10 +69,7 @@ class FavoritesScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
-                // Additional instruction
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Text(
@@ -53,10 +80,7 @@ class FavoritesScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // Browse shows button
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
@@ -76,11 +100,10 @@ class FavoritesScreen extends StatelessWidget {
           )
               : RefreshIndicator(
             onRefresh: () async {
-              favoritesProvider.refreshFavorites();
+              await favoritesProvider.refreshFavorites();
             },
             child: Column(
               children: [
-                // Results count message
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                   child: Text(
@@ -91,8 +114,6 @@ class FavoritesScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // Favorites grid
                 Expanded(
                   child: GridView.builder(
                     padding: const EdgeInsets.all(8),
