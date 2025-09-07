@@ -31,7 +31,7 @@ class LoadingIndicator extends StatelessWidget {
   factory LoadingIndicator.searchEmpty() {
     return const LoadingIndicator(
       lottieAsset: 'assets/lottie/search.json',
-      size: 650,
+      size: 300,
     );
   }
 
