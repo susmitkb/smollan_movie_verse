@@ -15,6 +15,43 @@ class FavoritesScreen extends StatelessWidget {
       appBar: const CustomAppBar(title: 'Favorites'),
       body: Consumer<FavoritesProvider>(
         builder: (context, favoritesProvider, child) {
+          // Show loading indicator while favorites are being loaded
+          if (favoritesProvider.isLoading) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          // Show error message if there was an error loading favorites
+          if (favoritesProvider.error != null) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error loading favorites',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    favoritesProvider.error!,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      favoritesProvider.refreshFavorites();
+                    },
+                    child: const Text('Try Again'),
+                  ),
+                ],
+              ),
+            );
+          }
+
           final favorites = favoritesProvider.favorites;
 
           return favorites.isEmpty
@@ -74,7 +111,7 @@ class FavoritesScreen extends StatelessWidget {
           )
               : RefreshIndicator(
             onRefresh: () async {
-              favoritesProvider.refreshFavorites();
+              await favoritesProvider.refreshFavorites();
             },
             child: Column(
               children: [

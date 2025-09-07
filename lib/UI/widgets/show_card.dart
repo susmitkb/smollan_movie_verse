@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smollan_movie_verse/UI/showDetails_screen.dart';
@@ -20,10 +21,47 @@ class TVShowCacheManager extends CacheManager {
   ));
 }
 
-class ShowCard extends StatelessWidget {
+class ShowCard extends StatefulWidget {
   final TVShow show;
 
   const ShowCard({super.key, required this.show});
+
+  @override
+  State<ShowCard> createState() => _ShowCardState();
+}
+
+class _ShowCardState extends State<ShowCard> {
+  File? _cachedImageFile;
+  bool _checkingCache = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkImageCache();
+  }
+
+  Future<void> _checkImageCache() async {
+    if (widget.show.imageUrl == null) return;
+
+    setState(() {
+      _checkingCache = true;
+    });
+
+    try {
+      final file = await TVShowCacheManager().getSingleFile(widget.show.imageUrl!);
+      if (await file.exists()) {
+        setState(() {
+          _cachedImageFile = file;
+        });
+      }
+    } catch (e) {
+      // Ignore errors, we'll use the placeholder
+    } finally {
+      setState(() {
+        _checkingCache = false;
+      });
+    }
+  }
 
   void _showSnackBar(BuildContext context, String message, Color backgroundColor) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -57,7 +95,7 @@ class ShowCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ShowDetailsScreen(show: show),
+              builder: (context) => ShowDetailsScreen(show: widget.show),
             ),
           );
         },
@@ -68,16 +106,8 @@ class ShowCard extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                 child: Hero(
-                  tag: 'show-${show.id}',
-                  child: show.imageUrl != null
-                      ? CachedNetworkImage(
-                    cacheManager: TVShowCacheManager(), // Use persistent cache
-                    imageUrl: show.imageUrl!,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => _buildPlaceholder(),
-                    errorWidget: (context, url, error) => _buildPlaceholder(),
-                  )
-                      : _buildPlaceholder(),
+                  tag: 'show-${widget.show.id}',
+                  child: _buildImageWidget(),
                 ),
               ),
             ),
@@ -87,7 +117,7 @@ class ShowCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    show.name,
+                    widget.show.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -97,31 +127,31 @@ class ShowCard extends StatelessWidget {
                     children: [
                       const Icon(Icons.star, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
-                      Text(show.rating.toString()),
+                      Text(widget.show.rating.toString()),
                       const Spacer(),
                       Consumer<FavoritesProvider>(
                         builder: (context, favoritesProvider, child) {
-                          final isFavorite = favoritesProvider.isFavorite(show.id);
+                          final isFavorite = favoritesProvider.isFavorite(widget.show.id);
                           return IconButton(
                             icon: Icon(
                               isFavorite ? Icons.favorite : Icons.favorite_border,
                               color: isFavorite ? Colors.red : null,
                             ),
                             onPressed: () {
-                              final wasFavorite = favoritesProvider.isFavorite(show.id);
-                              favoritesProvider.toggleFavorite(show);
+                              final wasFavorite = favoritesProvider.isFavorite(widget.show.id);
+                              favoritesProvider.toggleFavorite(widget.show);
 
                               // Show snackbar based on action
                               if (wasFavorite) {
                                 _showSnackBar(
                                   context,
-                                  'Removed "${show.name}" from favorites',
+                                  'Removed "${widget.show.name}" from favorites',
                                   Theme.of(context).colorScheme.error,
                                 );
                               } else {
                                 _showSnackBar(
                                   context,
-                                  'Added "${show.name}" to favorites',
+                                  'Added "${widget.show.name}" to favorites',
                                   Theme.of(context).colorScheme.primary,
                                 );
                               }
@@ -138,6 +168,56 @@ class ShowCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildImageWidget() {
+    if (_checkingCache) {
+      return _buildPlaceholder();
+    }
+
+    if (widget.show.imageUrl == null) {
+      return _buildPlaceholder();
+    }
+
+    // If we have a cached file, use it for offline viewing
+    if (_cachedImageFile != null) {
+      return Image.file(
+        _cachedImageFile!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+      );
+    }
+
+    // Otherwise use CachedNetworkImage with proper error handling
+    return CachedNetworkImage(
+      cacheManager: TVShowCacheManager(),
+      imageUrl: widget.show.imageUrl!,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => _buildPlaceholder(),
+      errorWidget: (context, url, error) {
+        // Try to get the cached file as a fallback
+        return FutureBuilder<File>(
+          future: TVShowCacheManager().getSingleFile(widget.show.imageUrl!),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return _buildPlaceholder();
+            }
+
+            if (snapshot.hasData && snapshot.data!.existsSync()) {
+              return Image.file(
+                snapshot.data!,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              );
+            }
+
+            return _buildPlaceholder();
+          },
+        );
+      },
     );
   }
 

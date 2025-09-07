@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lottie/lottie.dart'; // Add this import
 import 'package:smollan_movie_verse/UI/favourites_screen.dart';
 import 'package:smollan_movie_verse/UI/search_screen.dart';
 import 'package:smollan_movie_verse/UI/widgets/custom_appBar.dart';
@@ -17,14 +18,24 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _isLoadingMore = false;
+  bool _initialLoadComplete = false;
+  bool _isSwitchingFilter = false;
+  ShowFilter? _loadingFilter;
 
   @override
   void initState() {
     super.initState();
-    final provider = Provider.of<TVShowProvider>(context, listen: false);
-    if (provider.shows.isEmpty) {
-      provider.fetchShows(ShowFilter.trending, loadMore: false);
-    }
+
+    // Use Future.microtask to run after the build is complete
+    Future.microtask(() {
+      final provider = Provider.of<TVShowProvider>(context, listen: false);
+      if (provider.shows.isEmpty) {
+        provider.fetchShows(ShowFilter.trending, loadMore: false);
+      } else {
+        // If we already have data, mark initial load as complete
+        _initialLoadComplete = true;
+      }
+    });
 
     _scrollController.addListener(_scrollListener);
   }
@@ -84,6 +95,22 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _handleFilterChange(ShowFilter filter, TVShowProvider provider) {
+    if (provider.currentFilter == filter) return;
+
+    setState(() {
+      _isSwitchingFilter = true;
+      _loadingFilter = filter;
+    });
+
+    provider.fetchShows(filter, loadMore: false).then((_) {
+      setState(() {
+        _isSwitchingFilter = false;
+        _loadingFilter = null;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,9 +125,82 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Consumer<TVShowProvider>(
         builder: (context, provider, child) {
-          if (provider.state == UIState.loading && provider.shows.isEmpty) {
-            return const LoadingIndicator();
+          // Check if we're switching filters and the target filter is loading
+          final bool isTargetFilterLoading = _isSwitchingFilter &&
+              _loadingFilter != null &&
+              provider.currentFilter == _loadingFilter &&
+              provider.state == UIState.loading;
+
+          // Handle initial loading state or filter switching loading state
+          if ((!_initialLoadComplete && provider.state == UIState.loading && provider.shows.isEmpty) ||
+              isTargetFilterLoading) {
+            return Column(
+              children: [
+                // Search Bar at the top
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: GestureDetector(
+                    onTap: _navigateToSearchScreen,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.search, color: Colors.grey),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Search for TV shows...',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      FilterChip(
+                        label: const Text('Trending'),
+                        selected: provider.currentFilter == ShowFilter.trending,
+                        onSelected: (_) => _handleFilterChange(ShowFilter.trending, provider),
+                      ),
+                      FilterChip(
+                        label: const Text('Popular'),
+                        selected: provider.currentFilter == ShowFilter.popular,
+                        onSelected: (_) => _handleFilterChange(ShowFilter.popular, provider),
+                      ),
+                      FilterChip(
+                        label: const Text('Upcoming'),
+                        selected: provider.currentFilter == ShowFilter.upcoming,
+                        onSelected: (_) => _handleFilterChange(ShowFilter.upcoming, provider),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Lottie.asset(
+                      'assets/lottie/movie_loading.json', // Replace with your Lottie file path
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ],
+            );
           }
+
           if (provider.state == UIState.error && provider.shows.isEmpty) {
             return Padding(
               padding: const EdgeInsets.all(20.0),
@@ -109,10 +209,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     LoadingIndicator.netwrokError(errorMessage: "Network Connection Error!"),
-
                     const SizedBox(height: 24),
-
-                    // Professional retry button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -143,10 +240,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
-
-                    // Additional help text
                     Text(
                       'If the problem persists, check your internet connection',
                       textAlign: TextAlign.center,
@@ -160,21 +254,89 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             );
           }
+
           if (provider.state == UIState.empty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  LoadingIndicator.searchEmpty(),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No shows found',
-                    style: Theme.of(context).textTheme.titleMedium,
+            return Column(
+              children: [
+                // Search Bar at the top
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: GestureDetector(
+                    onTap: _navigateToSearchScreen,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.search, color: Colors.grey),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Search for TV shows...',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ],
-              ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      FilterChip(
+                        label: const Text('Trending'),
+                        selected: provider.currentFilter == ShowFilter.trending,
+                        onSelected: (_) => _handleFilterChange(ShowFilter.trending, provider),
+                      ),
+                      FilterChip(
+                        label: const Text('Popular'),
+                        selected: provider.currentFilter == ShowFilter.popular,
+                        onSelected: (_) => _handleFilterChange(ShowFilter.popular, provider),
+                      ),
+                      FilterChip(
+                        label: const Text('Upcoming'),
+                        selected: provider.currentFilter == ShowFilter.upcoming,
+                        onSelected: (_) => _handleFilterChange(ShowFilter.upcoming, provider),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        LoadingIndicator.searchEmpty(),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No shows found',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             );
           }
+
+          // Mark initial load as complete once we have data
+          if (!_initialLoadComplete) {
+            Future.microtask(() {
+              setState(() {
+                _initialLoadComplete = true;
+              });
+            });
+          }
+
           return Column(
             children: [
               // Search Bar at the top
@@ -213,17 +375,17 @@ class _HomeScreenState extends State<HomeScreen> {
                     FilterChip(
                       label: const Text('Trending'),
                       selected: provider.currentFilter == ShowFilter.trending,
-                      onSelected: (_) => provider.fetchShows(ShowFilter.trending, loadMore: false),
+                      onSelected: (_) => _handleFilterChange(ShowFilter.trending, provider),
                     ),
                     FilterChip(
                       label: const Text('Popular'),
                       selected: provider.currentFilter == ShowFilter.popular,
-                      onSelected: (_) => provider.fetchShows(ShowFilter.popular, loadMore: false),
+                      onSelected: (_) => _handleFilterChange(ShowFilter.popular, provider),
                     ),
                     FilterChip(
                       label: const Text('Upcoming'),
                       selected: provider.currentFilter == ShowFilter.upcoming,
-                      onSelected: (_) => provider.fetchShows(ShowFilter.upcoming, loadMore: false),
+                      onSelected: (_) => _handleFilterChange(ShowFilter.upcoming, provider),
                     ),
                   ],
                 ),
@@ -265,7 +427,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Center(
-                            child: LoadingIndicator.searching(),
+                            child: Lottie.asset(
+                              'assets/lottie/movie_loading.json',                              width: 100,
+                              height: 100,
+                              fit: BoxFit.contain,
+                            ),
                           ),
                         ),
                       if (!provider.hasMoreShows && provider.shows.isNotEmpty)
