@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smollan_movie_verse/UI/home_screen.dart';
+import 'package:smollan_movie_verse/UI/screens/home_screen.dart';
 import 'package:smollan_movie_verse/UI/widgets/custom_appBar.dart';
 import 'package:smollan_movie_verse/UI/widgets/loadingIndicator.dart';
 import 'package:smollan_movie_verse/providers/favourites_provider.dart';
@@ -15,14 +15,11 @@ class FavoritesScreen extends StatelessWidget {
       appBar: const CustomAppBar(title: 'Favorites'),
       body: Consumer<FavoritesProvider>(
         builder: (context, favoritesProvider, child) {
-          // Show loading indicator while favorites are being loaded
           if (favoritesProvider.isLoading) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
-
-          // Show error message if there was an error loading favorites
           if (favoritesProvider.error != null) {
             return Center(
               child: Column(
@@ -59,12 +56,8 @@ class FavoritesScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Lottie animation for empty favorites
                 LoadingIndicator.favouritesEmpty(),
-
                 const SizedBox(height: 24),
-
-                // Catchy message
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Text(
@@ -76,7 +69,6 @@ class FavoritesScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -88,10 +80,7 @@ class FavoritesScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
-                // Browse shows button
                 ElevatedButton.icon(
                   onPressed: () {
                     Navigator.push(
@@ -115,7 +104,6 @@ class FavoritesScreen extends StatelessWidget {
             },
             child: Column(
               children: [
-                // Results count message
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                   child: Text(
@@ -126,8 +114,6 @@ class FavoritesScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                // Favorites grid
                 Expanded(
                   child: GridView.builder(
                     padding: const EdgeInsets.all(8),

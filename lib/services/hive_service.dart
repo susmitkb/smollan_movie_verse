@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:hive/hive.dart';
 import 'package:smollan_movie_verse/models/tvShow_adapter.dart';
 import 'package:smollan_movie_verse/models/tvShow_models.dart';
@@ -10,20 +11,16 @@ class HiveService {
     if (_isInitialized) return;
 
     try {
-      // REMOVED: Adapter registration (already done in main.dart)
-      // Just open the box - adapter is already registered
       await Hive.openBox<TVShow>(favoritesBox);
       _isInitialized = true;
 
-      print('✅ HiveService initialized successfully');
+      log('✅ HiveService initialized successfully', name: 'HiveService');
 
-      // Debug: Check if box exists and has data
       final box = Hive.box<TVShow>(favoritesBox);
-      print('📦 Favorites box contains ${box.length} items');
+      log('📦 Favorites box contains ${box.length} items', name: 'HiveService');
 
     } catch (e) {
-      print('❌ Error initializing HiveService: $e');
-      // Re-throw to handle in main.dart
+      log('❌ Error initializing HiveService: $e', name: 'HiveService');
       throw e;
     }
   }
@@ -38,13 +35,13 @@ class HiveService {
   static void addToFavorites(TVShow show) {
     final box = getFavoritesBox();
     box.put(show.id, show);
-    print('💾 Saved "${show.name}" to favorites (ID: ${show.id})');
+    log('💾 Saved "${show.name}" to favorites (ID: ${show.id})', name: 'HiveService');
   }
 
   static void removeFromFavorites(int showId) {
     final box = getFavoritesBox();
     box.delete(showId);
-    print('🗑️ Removed show ID $showId from favorites');
+    log('🗑️ Removed show ID $showId from favorites', name: 'HiveService');
   }
 
   static bool isFavorite(int showId) {
@@ -55,22 +52,20 @@ class HiveService {
   static List<TVShow> getFavorites() {
     final box = getFavoritesBox();
     final favorites = box.values.toList();
-    print('📋 Retrieved ${favorites.length} favorites from Hive');
+    log('📋 Retrieved ${favorites.length} favorites from Hive', name: 'HiveService');
     return favorites;
   }
 
-  // Add a method to check if Hive is ready
   static bool get isReady => _isInitialized;
 
-  // Add debug method to check storage
   static void debugStorage() {
     if (!_isInitialized) return;
 
     final box = getFavoritesBox();
-    print('=== HIVE DEBUG INFO ===');
-    print('Box name: $favoritesBox');
-    print('Total items: ${box.length}');
-    print('Keys: ${box.keys.toList()}');
-    print('=======================');
+    log('=== HIVE DEBUG INFO ===', name: 'HiveService');
+    log('Box name: $favoritesBox', name: 'HiveService');
+    log('Total items: ${box.length}', name: 'HiveService');
+    log('Keys: ${box.keys.toList()}', name: 'HiveService');
+    log('=======================', name: 'HiveService');
   }
 }

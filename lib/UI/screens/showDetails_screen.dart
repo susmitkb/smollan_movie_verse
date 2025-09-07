@@ -1,68 +1,16 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:smollan_movie_verse/models/tvShow_models.dart';
+import 'package:smollan_movie_verse/providers/imageCache_provider.dart';
 import 'package:smollan_movie_verse/providers/theme_provider.dart';
 import 'package:smollan_movie_verse/providers/favourites_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:html/parser.dart' as html_parser;
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
-// Use the same cache manager from ShowCard
-class TVShowCacheManager extends CacheManager {
-  static const key = 'tvShowCache';
-
-  static final TVShowCacheManager _instance = TVShowCacheManager._();
-  factory TVShowCacheManager() => _instance;
-
-  TVShowCacheManager._() : super(Config(
-    key,
-    stalePeriod: const Duration(days: 365),
-    maxNrOfCacheObjects: 500,
-  ));
-}
-
-class ShowDetailsScreen extends StatefulWidget {
+class ShowDetailsScreen extends StatelessWidget {
   final TVShow show;
 
   const ShowDetailsScreen({super.key, required this.show});
-
-  @override
-  State<ShowDetailsScreen> createState() => _ShowDetailsScreenState();
-}
-
-class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
-  File? _cachedImageFile;
-  bool _checkingCache = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkImageCache();
-  }
-
-  Future<void> _checkImageCache() async {
-    if (widget.show.imageUrl == null) return;
-
-    setState(() {
-      _checkingCache = true;
-    });
-
-    try {
-      final file = await TVShowCacheManager().getSingleFile(widget.show.imageUrl!);
-      if (await file.exists()) {
-        setState(() {
-          _cachedImageFile = file;
-        });
-      }
-    } catch (e) {
-      // Ignore errors, we'll use the placeholder
-    } finally {
-      setState(() {
-        _checkingCache = false;
-      });
-    }
-  }
 
   String _parseHtmlString(String htmlString) {
     final document = html_parser.parse(htmlString);
@@ -87,57 +35,39 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
     );
   }
 
-  Widget _buildImageWidget() {
-    if (_checkingCache) {
+  Widget _buildImageWidget(BuildContext context) {
+    final imageCacheProvider = Provider.of<ImageCacheProvider>(context, listen: true);
+    final cachedFile = imageCacheProvider.getCachedImage(show.imageUrl ?? '');
+    final isLoading = imageCacheProvider.isLoading(show.imageUrl ?? '');
+
+    if (isLoading) {
       return _buildImagePlaceholder();
     }
 
-    if (widget.show.imageUrl == null) {
+    if (show.imageUrl == null) {
       return _buildImagePlaceholder();
     }
 
-    // If we have a cached file, use it for offline viewing
-    if (_cachedImageFile != null) {
+    if (cachedFile != null) {
       return Image.file(
-        _cachedImageFile!,
+        cachedFile,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
       );
     }
 
-    // Otherwise use CachedNetworkImage with proper error handling
     return CachedNetworkImage(
-      cacheManager: TVShowCacheManager(),
-      imageUrl: widget.show.imageUrl!,
+      imageUrl: show.imageUrl!,
       fit: BoxFit.cover,
       placeholder: (context, url) => _buildImagePlaceholder(),
-      errorWidget: (context, url, error) {
-        // Try to get the cached file as a fallback
-        return FutureBuilder<File>(
-          future: TVShowCacheManager().getSingleFile(widget.show.imageUrl!),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildImagePlaceholder();
-            }
-
-            if (snapshot.hasData && snapshot.data!.existsSync()) {
-              return Image.file(
-                snapshot.data!,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-              );
-            }
-
-            return _buildImagePlaceholder();
-          },
-        );
-      },
+      errorWidget: (context, url, error) => _buildImagePlaceholder(),
     );
   }
 
-  void _showRemoveConfirmationDialog(BuildContext context, FavoritesProvider favoritesProvider) {
+  void _showRemoveConfirmationDialog(BuildContext context) {
+    final favoritesProvider = Provider.of<FavoritesProvider>(context, listen: false);
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -157,7 +87,6 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Icon
                 Container(
                   width: 60,
                   height: 60,
@@ -174,7 +103,6 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
 
                 const SizedBox(height: 20),
 
-                // Title
                 Text(
                   'Remove from Favorites?',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -186,9 +114,8 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
 
                 const SizedBox(height: 12),
 
-                // Description
                 Text(
-                  'Are you sure you want to remove "${widget.show.name}" from your favorites?',
+                  'Are you sure you want to remove "${show.name}" from your favorites?',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                     height: 1.4,
@@ -198,15 +125,11 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
 
                 const SizedBox(height: 24),
 
-                // Buttons
                 Row(
                   children: [
-                    // Cancel Button
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
+                        onPressed: () => Navigator.of(context).pop(),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
@@ -228,17 +151,15 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
 
                     const SizedBox(width: 12),
 
-                    // Remove Button
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          favoritesProvider.removeFromFavorites(widget.show.id);
+                          favoritesProvider.removeFromFavorites(show.id);
                           Navigator.of(context).pop();
 
-                          // Show a snackbar confirmation
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Removed "${widget.show.name}" from favorites'),
+                              content: Text('Removed "${show.name}" from favorites'),
                               behavior: SnackBarBehavior.floating,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -274,10 +195,44 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
     );
   }
 
+  Widget _buildFavoriteButton(BuildContext context) {
+    final favoritesProvider = Provider.of<FavoritesProvider>(context, listen: true);
+    final isFavorite = favoritesProvider.isFavorite(show.id);
+
+    return IconButton(
+      icon: Icon(
+        isFavorite ? Icons.favorite : Icons.favorite_border,
+        color: isFavorite ? Colors.red : Colors.white,
+      ),
+      onPressed: () {
+        if (isFavorite) {
+          _showRemoveConfirmationDialog(context);
+        } else {
+          favoritesProvider.addToFavorites(show);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Added "${show.name}" to favorites'),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+          );
+        }
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    final favoritesProvider = Provider.of<FavoritesProvider>(context, listen: false);
+
+    // Pre-cache image when screen is built
+    if (show.imageUrl != null) {
+      final imageCacheProvider = Provider.of<ImageCacheProvider>(context, listen: false);
+      imageCacheProvider.cacheImage(show.imageUrl!);
+    }
 
     return Scaffold(
       body: CustomScrollView(
@@ -287,11 +242,11 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               background: Hero(
-                tag: 'show-${widget.show.id}',
-                child: _buildImageWidget(), // Use the same image widget as ShowCard
+                tag: 'show-${show.id}',
+                child: _buildImageWidget(context),
               ),
               title: Text(
-                widget.show.name,
+                show.name,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -306,40 +261,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
               ),
               centerTitle: true,
             ),
-            actions: [
-              Consumer<FavoritesProvider>(
-                builder: (context, favoritesProvider, child) {
-                  final isFavorite = favoritesProvider.isFavorite(widget.show.id);
-                  return IconButton(
-                    icon: Icon(
-                      isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: isFavorite ? Colors.red : Colors.white,
-                    ),
-                    onPressed: () {
-                      if (isFavorite) {
-                        // Show confirmation dialog for removal
-                        _showRemoveConfirmationDialog(context, favoritesProvider);
-                      } else {
-                        // Just add to favorites without confirmation
-                        favoritesProvider.addToFavorites(widget.show);
-
-                        // Show a snackbar confirmation for adding
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Added "${widget.show.name}" to favorites'),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            backgroundColor: Theme.of(context).colorScheme.primary,
-                          ),
-                        );
-                      }
-                    },
-                  );
-                },
-              ),
-            ],
+            actions: [_buildFavoriteButton(context)],
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -352,12 +274,12 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                       Chip(
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         label: Text(
-                          '⭐ ${widget.show.rating}',
+                          '⭐ ${show.rating}',
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
                       const SizedBox(width: 8),
-                      ...widget.show.genres.take(3).map((genre) {
+                      ...show.genres.take(3).map((genre) {
                         return Padding(
                           padding: const EdgeInsets.only(right: 8.0),
                           child: Chip(
@@ -376,12 +298,12 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    _parseHtmlString(widget.show.summary),
+                    _parseHtmlString(show.summary),
                     style: Theme.of(context).textTheme.bodyLarge,
                     textAlign: TextAlign.justify,
                   ),
                   const SizedBox(height: 24),
-                  if (widget.show.genres.isNotEmpty)
+                  if (show.genres.isNotEmpty)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -395,7 +317,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
                         Wrap(
                           spacing: 8,
                           runSpacing: 4,
-                          children: widget.show.genres.map((genre) {
+                          children: show.genres.map((genre) {
                             return Chip(
                               label: Text(genre),
                             );
@@ -410,9 +332,7 @@ class _ShowDetailsScreenState extends State<ShowDetailsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          themeProvider.toggleTheme();
-        },
+        onPressed: () => themeProvider.toggleTheme(),
         child: Icon(
           themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
         ),

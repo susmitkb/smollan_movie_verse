@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:smollan_movie_verse/UI/home_screen.dart';
+import 'package:smollan_movie_verse/UI/screens/home_screen.dart';
 import 'package:smollan_movie_verse/models/tvShow_adapter.dart';
 import 'package:smollan_movie_verse/providers/favourites_provider.dart';
+import 'package:smollan_movie_verse/providers/imageCache_provider.dart';
 import 'package:smollan_movie_verse/providers/theme_provider.dart';
 import 'package:smollan_movie_verse/providers/tvShow_provider.dart';
 import 'package:smollan_movie_verse/repository/tvShow_repo.dart';
@@ -52,6 +53,7 @@ class MyApp extends StatelessWidget {
           create: (_) => TVShowProvider(TVShowRepository()),
         ),
         ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        ChangeNotifierProvider(create: (_) => ImageCacheProvider()),
       ],
       child: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

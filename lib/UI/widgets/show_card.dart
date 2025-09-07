@@ -1,67 +1,15 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smollan_movie_verse/UI/showDetails_screen.dart';
+import 'package:smollan_movie_verse/UI/screens/showDetails_screen.dart';
 import 'package:smollan_movie_verse/models/tvShow_models.dart';
-import 'package:smollan_movie_verse/providers/favourites_provider.dart';
+import 'package:smollan_movie_verse/providers/favourites_provider.dart' hide TVShowCacheManager;
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter_cache_manager/flutter_cache_manager.dart';
+import 'package:smollan_movie_verse/providers/imageCache_provider.dart';
 
-// Create a custom cache manager with persistent storage
-class TVShowCacheManager extends CacheManager {
-  static const key = 'tvShowCache';
-
-  static final TVShowCacheManager _instance = TVShowCacheManager._();
-  factory TVShowCacheManager() => _instance;
-
-  TVShowCacheManager._() : super(Config(
-    key,
-    stalePeriod: const Duration(days: 365), // Keep cached images for 1 year
-    maxNrOfCacheObjects: 500, // Store up to 500 images
-  ));
-}
-
-class ShowCard extends StatefulWidget {
+class ShowCard extends StatelessWidget {
   final TVShow show;
 
   const ShowCard({super.key, required this.show});
-
-  @override
-  State<ShowCard> createState() => _ShowCardState();
-}
-
-class _ShowCardState extends State<ShowCard> {
-  File? _cachedImageFile;
-  bool _checkingCache = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _checkImageCache();
-  }
-
-  Future<void> _checkImageCache() async {
-    if (widget.show.imageUrl == null) return;
-
-    setState(() {
-      _checkingCache = true;
-    });
-
-    try {
-      final file = await TVShowCacheManager().getSingleFile(widget.show.imageUrl!);
-      if (await file.exists()) {
-        setState(() {
-          _cachedImageFile = file;
-        });
-      }
-    } catch (e) {
-      // Ignore errors, we'll use the placeholder
-    } finally {
-      setState(() {
-        _checkingCache = false;
-      });
-    }
-  }
 
   void _showSnackBar(BuildContext context, String message, Color backgroundColor) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -86,6 +34,12 @@ class _ShowCardState extends State<ShowCard> {
   @override
   Widget build(BuildContext context) {
     final favoritesProvider = Provider.of<FavoritesProvider>(context, listen: false);
+    final imageCacheProvider = Provider.of<ImageCacheProvider>(context);
+
+    // Pre-cache image when card is built
+    if (show.imageUrl != null) {
+      imageCacheProvider.cacheImage(show.imageUrl!);
+    }
 
     return Card(
       elevation: 4,
@@ -95,7 +49,7 @@ class _ShowCardState extends State<ShowCard> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ShowDetailsScreen(show: widget.show),
+              builder: (context) => ShowDetailsScreen(show: show),
             ),
           );
         },
@@ -106,8 +60,8 @@ class _ShowCardState extends State<ShowCard> {
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                 child: Hero(
-                  tag: 'show-${widget.show.id}',
-                  child: _buildImageWidget(),
+                  tag: 'show-${show.id}',
+                  child: _buildImageWidget(context, imageCacheProvider),
                 ),
               ),
             ),
@@ -117,7 +71,7 @@ class _ShowCardState extends State<ShowCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.show.name,
+                    show.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -127,31 +81,30 @@ class _ShowCardState extends State<ShowCard> {
                     children: [
                       const Icon(Icons.star, color: Colors.amber, size: 16),
                       const SizedBox(width: 4),
-                      Text(widget.show.rating.toString()),
+                      Text(show.rating.toString()),
                       const Spacer(),
                       Consumer<FavoritesProvider>(
                         builder: (context, favoritesProvider, child) {
-                          final isFavorite = favoritesProvider.isFavorite(widget.show.id);
+                          final isFavorite = favoritesProvider.isFavorite(show.id);
                           return IconButton(
                             icon: Icon(
                               isFavorite ? Icons.favorite : Icons.favorite_border,
                               color: isFavorite ? Colors.red : null,
                             ),
                             onPressed: () {
-                              final wasFavorite = favoritesProvider.isFavorite(widget.show.id);
-                              favoritesProvider.toggleFavorite(widget.show);
+                              final wasFavorite = favoritesProvider.isFavorite(show.id);
+                              favoritesProvider.toggleFavorite(show);
 
-                              // Show snackbar based on action
                               if (wasFavorite) {
                                 _showSnackBar(
                                   context,
-                                  'Removed "${widget.show.name}" from favorites',
+                                  'Removed "${show.name}" from favorites',
                                   Theme.of(context).colorScheme.error,
                                 );
                               } else {
                                 _showSnackBar(
                                   context,
-                                  'Added "${widget.show.name}" to favorites',
+                                  'Added "${show.name}" to favorites',
                                   Theme.of(context).colorScheme.primary,
                                 );
                               }
@@ -171,51 +124,35 @@ class _ShowCardState extends State<ShowCard> {
     );
   }
 
-  Widget _buildImageWidget() {
-    if (_checkingCache) {
+  Widget _buildImageWidget(BuildContext context, ImageCacheProvider imageCacheProvider) {
+    if (show.imageUrl == null) {
       return _buildPlaceholder();
     }
 
-    if (widget.show.imageUrl == null) {
-      return _buildPlaceholder();
-    }
+    return Consumer<ImageCacheProvider>(
+      builder: (context, imageCache, child) {
+        final cachedFile = imageCache.getCachedImage(show.imageUrl!);
+        final isLoading = imageCache.isLoading(show.imageUrl!);
 
-    // If we have a cached file, use it for offline viewing
-    if (_cachedImageFile != null) {
-      return Image.file(
-        _cachedImageFile!,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-      );
-    }
+        if (isLoading) {
+          return _buildPlaceholder();
+        }
 
-    // Otherwise use CachedNetworkImage with proper error handling
-    return CachedNetworkImage(
-      cacheManager: TVShowCacheManager(),
-      imageUrl: widget.show.imageUrl!,
-      fit: BoxFit.cover,
-      placeholder: (context, url) => _buildPlaceholder(),
-      errorWidget: (context, url, error) {
-        // Try to get the cached file as a fallback
-        return FutureBuilder<File>(
-          future: TVShowCacheManager().getSingleFile(widget.show.imageUrl!),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return _buildPlaceholder();
-            }
+        if (cachedFile != null) {
+          return Image.file(
+            cachedFile,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          );
+        }
 
-            if (snapshot.hasData && snapshot.data!.existsSync()) {
-              return Image.file(
-                snapshot.data!,
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-              );
-            }
-
-            return _buildPlaceholder();
-          },
+        return CachedNetworkImage(
+          cacheManager: TVShowCacheManager(),
+          imageUrl: show.imageUrl!,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => _buildPlaceholder(),
+          errorWidget: (context, url, error) => _buildPlaceholder(),
         );
       },
     );

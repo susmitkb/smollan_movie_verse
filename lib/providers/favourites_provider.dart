@@ -21,13 +21,21 @@ class FavoritesProvider with ChangeNotifier {
   List<TVShow> _favorites = [];
   bool _isLoading = false;
   String? _error;
+  bool _hasInitialized = false;
 
   List<TVShow> get favorites => _favorites;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get hasError => _error != null;
+  bool get isReady => _hasInitialized && !_isLoading;
 
   FavoritesProvider() {
-    _loadFavorites();
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    if (_hasInitialized) return;
+    await _loadFavorites();
   }
 
   Future<void> _loadFavorites() async {
@@ -49,11 +57,14 @@ class FavoritesProvider with ChangeNotifier {
         print('✅ Loaded ${_favorites.length} favorites from Hive');
       }
 
-      _preCacheAllFavoriteImages();
-    } catch (e) {
-      _error = 'Failed to load favorites: $e';
+      await _preCacheAllFavoriteImages();
+      _hasInitialized = true;
+
+    } catch (e, stackTrace) {
+      _error = 'Failed to load favorites: ${e.toString()}';
       if (kDebugMode) {
         print('❌ Error loading favorites: $e');
+        print('Stack trace: $stackTrace');
       }
     } finally {
       _isLoading = false;
@@ -61,79 +72,134 @@ class FavoritesProvider with ChangeNotifier {
     }
   }
 
-  // FIXED: Changed to async and added await
   Future<void> refreshFavorites() async {
     await _loadFavorites();
   }
 
   bool isFavorite(int showId) {
-    if (!HiveService.isReady) return false;
-    return HiveService.isFavorite(showId);
-  }
+    if (!HiveService.isReady) {
+      if (kDebugMode) {
+        print('⚠️ HiveService not ready when checking favorite status');
+      }
+      return false;
+    }
 
-  void toggleFavorite(TVShow show) {
-    if (isFavorite(show.id)) {
-      removeFromFavorites(show.id);
-    } else {
-      addToFavorites(show);
+    try {
+      return HiveService.isFavorite(showId);
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error checking favorite status: $e');
+      }
+      return false;
     }
   }
 
-  void addToFavorites(TVShow show) {
-    if (!HiveService.isReady) {
-      if (kDebugMode) {
-        print('❌ HiveService not ready, cannot add favorite');
+  Future<void> toggleFavorite(TVShow show) async {
+    try {
+      if (isFavorite(show.id)) {
+        await removeFromFavorites(show.id);
+      } else {
+        await addToFavorites(show);
       }
-      return;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error toggling favorite: $e');
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> addToFavorites(TVShow show) async {
+    if (!HiveService.isReady) {
+      throw Exception('HiveService not ready, cannot add favorite');
     }
 
     if (!isFavorite(show.id)) {
-      HiveService.addToFavorites(show);
-      _favorites.add(show);
-      preCacheFavoriteImage(show);
-      notifyListeners();
-    }
-  }
-
-  void removeFromFavorites(int showId) {
-    if (!HiveService.isReady) {
-      if (kDebugMode) {
-        print('❌ HiveService not ready, cannot remove favorite');
+      try {
+        HiveService.addToFavorites(show);
+        _favorites.add(show);
+        await _preCacheFavoriteImage(show);
+        notifyListeners();
+      } catch (e) {
+        if (kDebugMode) {
+          print('❌ Error adding to favorites: $e');
+        }
+        rethrow;
       }
-      return;
     }
-
-    HiveService.removeFromFavorites(showId);
-    _favorites.removeWhere((show) => show.id == showId);
-    notifyListeners();
   }
 
-  void preCacheFavoriteImage(TVShow show) {
-    if (show.imageUrl != null) {
-      TVShowCacheManager().downloadFile(show.imageUrl!).then((file) {
+  Future<void> removeFromFavorites(int showId) async {
+    if (!HiveService.isReady) {
+      throw Exception('HiveService not ready, cannot remove favorite');
+    }
+
+    try {
+      HiveService.removeFromFavorites(showId);
+      _favorites.removeWhere((show) => show.id == showId);
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error removing from favorites: $e');
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> _preCacheFavoriteImage(TVShow show) async {
+    if (show.imageUrl != null && show.imageUrl!.isNotEmpty) {
+      try {
+        await TVShowCacheManager().downloadFile(show.imageUrl!);
         if (kDebugMode) {
           print('✅ Pre-cached image for ${show.name}');
         }
-      }).catchError((error) {
+      } catch (error) {
         if (kDebugMode) {
           print('❌ Failed to pre-cache image for ${show.name}: $error');
         }
-      });
+        // Don't rethrow - image caching is non-critical
+      }
     }
   }
 
-  void _preCacheAllFavoriteImages() {
+  Future<void> _preCacheAllFavoriteImages() async {
+    final futures = <Future>[];
+
     for (final show in _favorites) {
-      preCacheFavoriteImage(show);
+      futures.add(_preCacheFavoriteImage(show));
+    }
+
+    await Future.wait(futures, eagerError: false);
+  }
+
+  Future<void> clearAllFavorites() async {
+    if (!HiveService.isReady) {
+      throw Exception('HiveService not ready, cannot clear favorites');
+    }
+
+    try {
+      final box = HiveService.getFavoritesBox();
+      await box.clear();
+      _favorites.clear();
+      notifyListeners();
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error clearing favorites: $e');
+      }
+      rethrow;
     }
   }
 
-  void clearAllFavorites() {
-    if (!HiveService.isReady) return;
-
-    final box = HiveService.getFavoritesBox();
-    box.clear();
-    _favorites.clear();
+  // Utility method to clear error state
+  void clearError() {
+    _error = null;
     notifyListeners();
+  }
+
+  // Method to retry failed operations
+  Future<void> retry() async {
+    if (hasError) {
+      await _loadFavorites();
+    }
   }
 }

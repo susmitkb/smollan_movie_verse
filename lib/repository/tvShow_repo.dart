@@ -234,8 +234,6 @@ class TVShowRepository {
     developer.log('🧹 Clearing TV show cache', name: 'TVShowRepository');
     _allShowsCache = null;
   }
-
-  // Helper method to debug cache contents
   void debugCache() {
     if (_allShowsCache == null) {
       developer.log('📦 Cache: EMPTY', name: 'TVShowRepository');

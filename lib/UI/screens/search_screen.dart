@@ -5,7 +5,7 @@ import 'package:smollan_movie_verse/constants/enums.dart';
 import 'package:smollan_movie_verse/providers/tvShow_provider.dart';
 import 'package:smollan_movie_verse/ui/widgets/show_card.dart';
 
-import 'widgets/custom_appBar.dart';
+import '../widgets/custom_appBar.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -59,7 +59,6 @@ class _SearchScreenState extends State<SearchScreen> {
       return const SizedBox.shrink(); // Hide message when no results (showing Lottie instead)
     }
 
-    // Default message when no search or empty search
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Text(
@@ -112,7 +111,6 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
 
-              // Dynamic search message
               _buildSearchMessage(provider),
 
               if (provider.searchState == UIState.loading)
