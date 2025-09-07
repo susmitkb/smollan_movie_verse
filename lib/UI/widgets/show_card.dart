@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:smollan_movie_verse/UI/screens/showDetails_screen.dart';
 import 'package:smollan_movie_verse/models/tvShow_models.dart';
@@ -16,16 +17,17 @@ class ShowCard extends StatelessWidget {
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w500,
+            fontSize: 14.sp,
           ),
         ),
         backgroundColor: backgroundColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(8.r),
         ),
-        margin: const EdgeInsets.all(16),
+        margin: EdgeInsets.all(16.r),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -43,7 +45,7 @@ class ShowCard extends StatelessWidget {
 
     return Card(
       elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -58,7 +60,7 @@ class ShowCard extends StatelessWidget {
           children: [
             Expanded(
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(12.r)),
                 child: Hero(
                   tag: 'show-${show.id}',
                   child: _buildImageWidget(context, imageCacheProvider),
@@ -66,7 +68,7 @@ class ShowCard extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: EdgeInsets.all(8.r),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -74,14 +76,20 @@ class ShowCard extends StatelessWidget {
                     show.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.sp,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: 4.h),
                   Row(
                     children: [
-                      const Icon(Icons.star, color: Colors.amber, size: 16),
-                      const SizedBox(width: 4),
-                      Text(show.rating.toString()),
+                      Icon(Icons.star, color: Colors.amber, size: 16.w),
+                      SizedBox(width: 4.w),
+                      Text(
+                        show.rating.toString(),
+                        style: TextStyle(fontSize: 12.sp),
+                      ),
                       const Spacer(),
                       Consumer<FavoritesProvider>(
                         builder: (context, favoritesProvider, child) {
@@ -90,6 +98,7 @@ class ShowCard extends StatelessWidget {
                             icon: Icon(
                               isFavorite ? Icons.favorite : Icons.favorite_border,
                               color: isFavorite ? Colors.red : null,
+                              size: 20.w,
                             ),
                             onPressed: () {
                               final wasFavorite = favoritesProvider.isFavorite(show.id);
@@ -109,7 +118,6 @@ class ShowCard extends StatelessWidget {
                                 );
                               }
                             },
-                            iconSize: 20,
                           );
                         },
                       ),
@@ -168,7 +176,7 @@ class ShowCard extends StatelessWidget {
           width: double.infinity,
           height: double.infinity,
           errorBuilder: (context, error, stackTrace) {
-            return const Icon(Icons.movie, size: 60, color: Colors.grey);
+            return Icon(Icons.movie, size: 60.w, color: Colors.grey);
           },
         ),
       ),
