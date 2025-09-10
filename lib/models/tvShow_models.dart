@@ -1,7 +1,7 @@
 import 'package:hive/hive.dart';
 
 
-@HiveType(typeId: 0) // Add Hive annotations
+@HiveType(typeId: 0)
 class TVShow {
   @HiveField(0)
   final int id;
@@ -34,7 +34,6 @@ class TVShow {
     return TVShow(
       id: json['id'],
       name: json['name'],
-      // FIXED: Make sure this matches what Hive expects
       imageUrl: json['imageUrl'] ?? (json['image'] != null ? json['image']['medium'] : null),
       rating: json['rating'] is Map
           ? (json['rating']['average'] != null ? (json['rating']['average'] as num).toDouble() : 0.0)
@@ -55,7 +54,6 @@ class TVShow {
     };
   }
 
-  // Add copyWith method for easier updates
   TVShow copyWith({
     int? id,
     String? name,
