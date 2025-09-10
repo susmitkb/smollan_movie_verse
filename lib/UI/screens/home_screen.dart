@@ -155,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildErrorState(TVShowProvider provider) {
-    return SingleChildScrollView( // Added SingleChildScrollView for safety
+    return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.all(20.r),
         child: Center(

@@ -35,23 +35,19 @@ class ImageCacheProvider with ChangeNotifier {
       final file = await TVShowCacheManager().getSingleFile(imageUrl);
       if (await file.exists()) {
         _cachedImages[imageUrl] = file;
-        log('✅ Image cached: $imageUrl', name: 'ImageCacheProvider');
+        log(' Image cached: $imageUrl', name: 'ImageCacheProvider');
 
-        // Only notify after the operation is complete and we're not in build phase
         if (!_loadingStates[imageUrl]!) { // Check if still in loading state
           notifyListeners();
         }
       }
     } catch (e) {
-      log('❌ Failed to cache image: $imageUrl - $e', name: 'ImageCacheProvider');
+      log(' Failed to cache image: $imageUrl - $e', name: 'ImageCacheProvider');
     } finally {
       _loadingStates[imageUrl] = false;
-      // Notify listeners that loading is complete
       notifyListeners();
     }
   }
-
-  // Alternative: Use a delayed notification approach
   Future<void> cacheImageSafe(String imageUrl) async {
     if (_cachedImages.containsKey(imageUrl) || _loadingStates[imageUrl] == true) {
       return;
@@ -66,10 +62,10 @@ class ImageCacheProvider with ChangeNotifier {
       final file = await TVShowCacheManager().getSingleFile(imageUrl);
       if (await file.exists()) {
         _cachedImages[imageUrl] = file;
-        log('✅ Image cached: $imageUrl', name: 'ImageCacheProvider');
+        log(' Image cached: $imageUrl', name: 'ImageCacheProvider');
       }
     } catch (e) {
-      log('❌ Failed to cache image: $imageUrl - $e', name: 'ImageCacheProvider');
+      log(' Failed to cache image: $imageUrl - $e', name: 'ImageCacheProvider');
     } finally {
       _loadingStates[imageUrl] = false;
       Future.microtask(() => notifyListeners());

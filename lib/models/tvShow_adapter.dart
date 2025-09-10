@@ -11,7 +11,7 @@ class TVShowAdapter extends TypeAdapter<TVShow> {
     final name = reader.readString();
     final imageUrl = reader.readString();
     final rating = reader.readDouble();
-    final genres = (reader.readList() as List<dynamic>).cast<String>();
+    final genres = (reader.readList()).cast<String>();
     final summary = reader.readString();
 
     return TVShow(

@@ -77,9 +77,9 @@ class _SearchSearchState extends State<SearchScreen> {
 
   int _getCrossAxisCount(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    if (width > 600) return 3;
-    if (width > 400) return 2;
-    return 1;
+    if (width > 600) return 4;
+    if (width > 400) return 3;
+    return 2;
   }
 
   @override

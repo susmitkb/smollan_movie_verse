@@ -47,25 +47,25 @@ class TVShowProvider with ChangeNotifier {
   bool get hasMoreShows => _hasMore[_currentFilter] ?? false;
 
   Future<void> fetchShows(ShowFilter filter, {bool loadMore = false}) async {
-    log('🎬 fetchShows called - Filter: $filter, LoadMore: $loadMore', name: 'TVShowProvider');
+    log('fetchShows called - Filter: $filter, LoadMore: $loadMore', name: 'TVShowProvider');
 
     if (loadMore) {
       if (!_hasMore[filter]! || _isLoadingMore) {
-        log('⏩ Skipping load more - hasMore: ${_hasMore[filter]}, isLoadingMore: $_isLoadingMore', name: 'TVShowProvider');
+        log('Skipping load more - hasMore: ${_hasMore[filter]}, isLoadingMore: $_isLoadingMore', name: 'TVShowProvider');
         return;
       }
       _isLoadingMore = true;
       _pages[filter] = (_pages[filter]! + 1);
-      log('📄 Loading page ${_pages[filter]} for $filter', name: 'TVShowProvider');
+      log('Loading page ${_pages[filter]} for $filter', name: 'TVShowProvider');
     } else {
       _currentFilter = filter;
       if (_showsCache[filter]!.isEmpty) {
         _pages[filter] = 1;
         _states[filter] = UIState.loading;
-        log('🔄 First load for $filter', name: 'TVShowProvider');
+        log('First load for $filter', name: 'TVShowProvider');
         notifyListeners();
       } else {
-        log('📊 Using cached data for $filter (${_showsCache[filter]!.length} items)', name: 'TVShowProvider');
+        log(' Using cached data for $filter (${_showsCache[filter]!.length} items)', name: 'TVShowProvider');
         notifyListeners();
         return;
       }
@@ -87,29 +87,29 @@ class TVShowProvider with ChangeNotifier {
 
       if (loadMore) {
         _showsCache[filter]!.addAll(newShows);
-        log('📈 Added ${newShows.length} shows to $filter cache (total: ${_showsCache[filter]!.length})', name: 'TVShowProvider');
+        log('Added ${newShows.length} shows to $filter cache (total: ${_showsCache[filter]!.length})', name: 'TVShowProvider');
       } else {
         _showsCache[filter] = newShows;
-        log('💾 Cached ${newShows.length} shows for $filter', name: 'TVShowProvider');
+        log(' Cached ${newShows.length} shows for $filter', name: 'TVShowProvider');
       }
 
       _hasMore[filter] = newShows.isNotEmpty;
       _states[filter] = _showsCache[filter]!.isEmpty ? UIState.empty : UIState.success;
 
-      log('✅ $filter fetch successful - Total: ${_showsCache[filter]!.length}, HasMore: ${_hasMore[filter]}', name: 'TVShowProvider');
+      log('$filter fetch successful - Total: ${_showsCache[filter]!.length}, HasMore: ${_hasMore[filter]}', name: 'TVShowProvider');
 
     } catch (e) {
       if (loadMore) {
         _pages[filter] = (_pages[filter]! - 1).clamp(1, 9999);
-        log('↩️ Reverted page to ${_pages[filter]} due to error', name: 'TVShowProvider');
+        log(' Reverted page to ${_pages[filter]} due to error', name: 'TVShowProvider');
       }
       _states[filter] = UIState.error;
       _errorMessage = e.toString();
-      log('❌ Error fetching $filter: $e', name: 'TVShowProvider');
+      log(' Error fetching $filter: $e', name: 'TVShowProvider');
     } finally {
       _isLoadingMore = false;
       notifyListeners();
-      log('📢 Notified listeners for $filter', name: 'TVShowProvider');
+      log(' Notified listeners for $filter', name: 'TVShowProvider');
     }
   }
 
@@ -121,25 +121,25 @@ class TVShowProvider with ChangeNotifier {
   List<TVShow> get searchResults => _searchResults;
 
   Future<void> searchShows(String query) async {
-    log('🔎 Search initiated: "$query"', name: 'TVShowProvider');
+    log(' Search initiated: "$query"', name: 'TVShowProvider');
     _searchState = UIState.loading;
     if (_searchResults.isNotEmpty) notifyListeners();
 
     try {
       _searchResults = await _repository.searchShows(query);
       _searchState = _searchResults.isEmpty ? UIState.empty : UIState.success;
-      log('✅ Search completed: ${_searchResults.length} results', name: 'TVShowProvider');
+      log(' Search completed: ${_searchResults.length} results', name: 'TVShowProvider');
     } catch (e) {
       _searchState = UIState.error;
       _errorMessage = e.toString();
-      log('❌ Search failed: $e', name: 'TVShowProvider');
+      log(' Search failed: $e', name: 'TVShowProvider');
     }
 
     notifyListeners();
   }
 
   void clearSearch() {
-    log('🧹 Clearing search results', name: 'TVShowProvider');
+    log(' Clearing search results', name: 'TVShowProvider');
     _searchResults.clear();
     _searchState = UIState.empty;
     notifyListeners();

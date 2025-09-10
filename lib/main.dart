@@ -33,10 +33,10 @@ void main() async {
     // Initialize HiveService
     await HiveService.init();
 
-    log('🎯 Hive initialization successful', name: 'main');
+    log(' Hive initialization successful', name: 'main');
 
   } catch (e, stackTrace) {
-    log('💥 CRITICAL: Hive initialization failed: $e',
+    log(' CRITICAL: Hive initialization failed: $e',
         name: 'main',
         error: e,
         stackTrace: stackTrace);

@@ -3,7 +3,6 @@ import 'package:smollan_movie_verse/models/tvShow_models.dart';
 import 'package:smollan_movie_verse/services/hive_service.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
-// Create a custom cache manager with persistent storage
 class TVShowCacheManager extends CacheManager {
   static const key = 'tvShowCache';
 
@@ -46,7 +45,6 @@ class FavoritesProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Ensure Hive is initialized
       if (!HiveService.isReady) {
         await HiveService.init();
       }
@@ -54,7 +52,7 @@ class FavoritesProvider with ChangeNotifier {
       _favorites = HiveService.getFavorites();
 
       if (kDebugMode) {
-        print('✅ Loaded ${_favorites.length} favorites from Hive');
+        print(' Loaded ${_favorites.length} favorites from Hive');
       }
 
       await _preCacheAllFavoriteImages();
@@ -63,7 +61,7 @@ class FavoritesProvider with ChangeNotifier {
     } catch (e, stackTrace) {
       _error = 'Failed to load favorites: ${e.toString()}';
       if (kDebugMode) {
-        print('❌ Error loading favorites: $e');
+        print(' Error loading favorites: $e');
         print('Stack trace: $stackTrace');
       }
     } finally {
@@ -79,7 +77,7 @@ class FavoritesProvider with ChangeNotifier {
   bool isFavorite(int showId) {
     if (!HiveService.isReady) {
       if (kDebugMode) {
-        print('⚠️ HiveService not ready when checking favorite status');
+        print(' HiveService not ready when checking favorite status');
       }
       return false;
     }
@@ -88,7 +86,7 @@ class FavoritesProvider with ChangeNotifier {
       return HiveService.isFavorite(showId);
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Error checking favorite status: $e');
+        print(' Error checking favorite status: $e');
       }
       return false;
     }
@@ -103,7 +101,7 @@ class FavoritesProvider with ChangeNotifier {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Error toggling favorite: $e');
+        print(' Error toggling favorite: $e');
       }
       rethrow;
     }
@@ -122,7 +120,7 @@ class FavoritesProvider with ChangeNotifier {
         notifyListeners();
       } catch (e) {
         if (kDebugMode) {
-          print('❌ Error adding to favorites: $e');
+          print(' Error adding to favorites: $e');
         }
         rethrow;
       }
@@ -140,7 +138,7 @@ class FavoritesProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Error removing from favorites: $e');
+        print(' Error removing from favorites: $e');
       }
       rethrow;
     }
@@ -151,11 +149,11 @@ class FavoritesProvider with ChangeNotifier {
       try {
         await TVShowCacheManager().downloadFile(show.imageUrl!);
         if (kDebugMode) {
-          print('✅ Pre-cached image for ${show.name}');
+          print(' Pre-cached image for ${show.name}');
         }
       } catch (error) {
         if (kDebugMode) {
-          print('❌ Failed to pre-cache image for ${show.name}: $error');
+          print(' Failed to pre-cache image for ${show.name}: $error');
         }
         // Don't rethrow - image caching is non-critical
       }
@@ -184,7 +182,7 @@ class FavoritesProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Error clearing favorites: $e');
+        print(' Error clearing favorites: $e');
       }
       rethrow;
     }
